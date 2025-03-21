@@ -743,6 +743,19 @@ final class Tag {
   const Tag();
 }
 
+/// 응답을 지정된 타입으로 자동 변환하기 위한 어노테이션
+///
+/// Example:
+/// ```dart
+/// @TypedResponse(UserModel)
+/// @Get(path: '/users')
+/// Future<Response<UserModel>> getUser();
+/// ```
+class TypedResponse {
+  final Type? converter;
+  const TypedResponse([this.converter]);
+}
+
 /// {@macro ChopperApi}
 const chopperApi = ChopperApi();
 

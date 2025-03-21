@@ -152,6 +152,7 @@ final class ChopperGenerator
     final ConstantReader? method = _getMethodAnnotation(m);
     final bool multipart = _hasAnnotation(m, chopper.Multipart);
     final bool formUrlEncoded = _hasAnnotation(m, chopper.FormUrlEncoded);
+    final ConstantReader? typedResponse = _getTypedResponseAnnotation(m);
     final ConstantReader? factoryConverter = _getFactoryConverterAnnotation(m);
 
     final Map<String, ConstantReader> body = _getAnnotation(m, chopper.Body);
@@ -445,6 +446,9 @@ final class ChopperGenerator
         final ExecutableElement? func =
             responseFactory.objectValue.toFunctionValue();
         namedArguments['responseConverter'] = refer(_factoryForFunction(func!));
+      } else if (typedResponse != null && responseInnerType != null) {
+        namedArguments['responseConverter'] =
+            _generateInlineConverter(responseInnerType);
       }
 
       final List<Reference> typeArguments = [];
@@ -569,6 +573,13 @@ final class ChopperGenerator
 
   static ConstantReader? _getFactoryConverterAnnotation(MethodElement method) {
     final DartObject? annotation = _typeChecker(chopper.FactoryConverter)
+        .firstAnnotationOf(method, throwOnUnresolved: false);
+
+    return annotation != null ? ConstantReader(annotation) : null;
+  }
+
+  static ConstantReader? _getTypedResponseAnnotation(MethodElement method) {
+    final DartObject? annotation = _typeChecker(chopper.TypedResponse)
         .firstAnnotationOf(method, throwOnUnresolved: false);
 
     return annotation != null ? ConstantReader(annotation) : null;
@@ -856,5 +867,31 @@ final class ChopperGenerator
             Vars.headers.toString(),
             type: refer('Map<String, String>'),
           ).assign(CodeExpression(Code(code))).statement;
+  }
+
+  static Expression _generateInlineConverter(DartType responseType) {
+    final typeStr = responseType.getDisplayString(withNullability: false);
+    return Method((b) => b
+      ..lambda = false
+      ..requiredParameters.add(
+        Parameter((b) => b
+          ..name = 'response'
+          ..type = refer('Response')),
+      )
+      ..body = Block.of([
+        declareFinal('jsonData')
+            .assign(refer('jsonDecode').call([refer('response.body')]))
+            .statement,
+        refer('response')
+            .property('copyWith')
+            .call([], {
+              'body':
+                  refer(typeStr).property('fromJson').call([refer('jsonData')])
+            }, [
+              refer(typeStr)
+            ])
+            .returned
+            .statement,
+      ])).closure;
   }
 }

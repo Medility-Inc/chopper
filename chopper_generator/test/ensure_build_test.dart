@@ -15,6 +15,7 @@ void main() {
           'test/test_service.chopper.dart',
           'test/test_service_variable.chopper.dart',
           'test/test_without_response_service.chopper.dart',
+          'test/test_typed_service.chopper.dart',
         ],
       );
     },
