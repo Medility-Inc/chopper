@@ -7,11 +7,14 @@ repository: https://github.com/lejard-h/chopper
 environment:
   sdk: ^3.0.0
 
+publish_to: none
+
 dependencies:
   analyzer: ">=6.9.0 <8.0.0"
   build: ^2.4.1
   built_collection: ^5.1.1
-  chopper: ^8.0.4
+  chopper:
+    path: ../chopper
   code_builder: ^4.10.0
   logging: ^1.2.0
   meta: ^1.9.1
